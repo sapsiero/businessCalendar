@@ -3,8 +3,7 @@ package com.sapsiero.businesscalendar
 class CalendarService {
 
     boolean isWorkingDay(Date date, String calshortname) {
-        def cal = Calendar.getByShortname(calshortname)
-        isWorkingDay(date, cal)
+        isWorkingDay(date, Calendar.findByShortname(calshortname))
     }
 
     boolean isWorkingDay(Date date, Calendar cal) {
@@ -35,13 +34,13 @@ class CalendarService {
         if (isWorkingDay) {
         //remove holidays
             if (cal.except.find { obj ->
-                obj.Date == date && !obj.additionalDay
+                obj.date + 1 > date && obj.date <= date && !obj.additionalDay
             })
                 isWorkingDay = false
         } else {
         //add working days
             if (cal.except.find { obj ->
-                obj.Date == date && obj.additionalDay
+                obj.date + 1 > date && obj.date <= date && obj.additionalDay
             })
                 isWorkingDay = true
         }
@@ -55,4 +54,37 @@ class CalendarService {
     boolean isHoliday(Date date, Calendar cal) {
         !isWorkingDay(date, cal)
     }
+
+    Date addWorkingDay(Date date, int days, Calendar cal) {
+        def nextdate = date
+        while(isHoliday(nextdate, cal)) 
+                nextdate++
+        (1..days).each() {
+            println "$it $nextdate"
+            nextdate++
+            while(isHoliday(nextdate, cal)) 
+                nextdate++
+            println "$it $nextdate"
+        }
+        nextdate
+    }
+
+    Date addWorkingDay(Date date, int days, String calshortname) {
+        addWorkingDay(date, days, Calendar.findByShortname(calshortname))
+    }
+
+    Date addHoliday(Date date, int days, Calendar cal) {
+        def nextdate = date
+        (1..days).each() {
+            nextdate++
+            while(isWorkingDay(nextdate, cal))
+                nextdate++
+        }
+        nextdate
+    }
+
+    Date addHoliday(Date date, int days, String calshortname) {
+        addHoliday(date, days, Calendar.findByShortname(calshortname))
+    }
+
 }
