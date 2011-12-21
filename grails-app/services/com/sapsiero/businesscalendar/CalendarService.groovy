@@ -3,7 +3,11 @@ package com.sapsiero.businesscalendar
 class CalendarService {
 
     boolean isWorkingDay(Date date, String calshortname) {
-        isWorkingDay(date, Calendar.findByShortname(calshortname))
+        def cal = Calendar.findByShortname(calshortname)
+        if (cal) 
+            isWorkingDay(date, cal)
+        else
+            throw new BcCalendarNotFoundException("BcCalendar '${calshortname}' not configured.")
     }
 
     boolean isWorkingDay(Date date, Calendar cal) {
@@ -57,20 +61,21 @@ class CalendarService {
 
     Date addWorkingDay(Date date, int days, Calendar cal) {
         def nextdate = date
-        while(isHoliday(nextdate, cal)) 
-                nextdate++
-        (1..days).each() {
-            println "$it $nextdate"
-            nextdate++
+        (0..days).each() { day ->
+            if (day != 0)
+                nextdate += (days > 0 ? 1 : -1)
             while(isHoliday(nextdate, cal)) 
-                nextdate++
-            println "$it $nextdate"
+                nextdate += (days >= 0 || day == 0 ? 1 : -1)
         }
         nextdate
     }
 
     Date addWorkingDay(Date date, int days, String calshortname) {
-        addWorkingDay(date, days, Calendar.findByShortname(calshortname))
+        def cal = Calendar.findByShortname(calshortname)
+        if (cal && validateCalendar(cal, days)) 
+            addWorkingDay(date, days, cal)
+        else
+            throw new BcCalendarNotFoundException("BcCalendar '${calshortname}' not configured.")
     }
 
     Date addHoliday(Date date, int days, Calendar cal) {
@@ -84,7 +89,18 @@ class CalendarService {
     }
 
     Date addHoliday(Date date, int days, String calshortname) {
-        addHoliday(date, days, Calendar.findByShortname(calshortname))
+        def cal = Calendar.findByShortname(calshortname)
+        if (cal) 
+            addHoliday(date, days, cal)
+        else
+            throw new BcCalendarNotFoundException("BcCalendar '${calshortname}' not configured.")
+    }
+
+    private boolean validateCalendar(Calendar cal, int days) {
+        if (!cal.monday && !cal.tuesday && !cal.wednesday && !cal.thursday && !cal.friday && !cal.saturday && !cal.sunday)
+            throw new BcCalendarMisconfiguredException("Calendar '${cal.shortname}' does not contain regular workingdays")
+        else
+            true
     }
 
 }

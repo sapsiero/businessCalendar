@@ -1,3 +1,4 @@
 target/
 *~
 grails-business-calendar-*.zip
+stacktrace.log
