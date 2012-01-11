@@ -41,7 +41,7 @@ class CalendarServiceSpec extends UnitSpec {
     }
 
     @Timeout(10)
-    def "CalendarService.addWorkingDay() wrong calendar config"() {
+    def "CalendarService.addWorkingDay() wrong calendar config A"() {
         setup:
         def calendarService = new CalendarService()
         mockDomain(Calendar)
@@ -51,7 +51,27 @@ class CalendarServiceSpec extends UnitSpec {
         calendarService.addWorkingDay(new Date(), 0, "DE")
 
         then: "Test"
-        thrown(BcCalendarMisconfiguredException)
+        def e = thrown(BcCalendarMisconfiguredException)
+        e.message == "Calendar 'DE' does not contain regular workingdays and irregular working days only count to 0 while more than 0 are needed."
+    }
+
+    @Timeout(10)
+    def "CalendarService.addWorkingDay() wrong calendar config B"() {
+        setup:
+        def calendarService = new CalendarService()
+        mockDomain(Calendar)
+        mockDomain(BcDate)
+        def cal = new Calendar(shortname: "DE", name: "Germany")
+        cal.save()
+        new BcDate(calendar: cal, date: new Date(2011,11,31), additionalDay: true).save()
+        
+
+        when: "Test"
+        calendarService.addWorkingDay(new Date(2011,11,30), 1, "DE")
+
+        then: "Test"
+        def e = thrown(BcCalendarMisconfiguredException)
+        e.message == "Calendar 'DE' does not contain regular workingdays and irregular working days only count to 1 while more than 1 are needed."
     }
 
 }

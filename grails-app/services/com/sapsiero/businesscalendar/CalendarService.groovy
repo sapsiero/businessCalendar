@@ -60,6 +60,7 @@ class CalendarService {
     }
 
     Date addWorkingDay(Date date, int days, Calendar cal) {
+        validateCalendar(date, cal, days, false)
         def nextdate = date
         (0..days).each() { day ->
             if (day != 0)
@@ -72,13 +73,15 @@ class CalendarService {
 
     Date addWorkingDay(Date date, int days, String calshortname) {
         def cal = Calendar.findByShortname(calshortname)
-        if (cal && validateCalendar(cal, days)) 
+        if (cal) {
+            validateCalendar(date, cal, days, false)
             addWorkingDay(date, days, cal)
-        else
+        } else
             throw new BcCalendarNotFoundException("BcCalendar '${calshortname}' not configured.")
     }
 
     Date addHoliday(Date date, int days, Calendar cal) {
+        validateCalendar(date, cal, days, true)
         def nextdate = date
         (1..days).each() {
             nextdate++
@@ -90,15 +93,23 @@ class CalendarService {
 
     Date addHoliday(Date date, int days, String calshortname) {
         def cal = Calendar.findByShortname(calshortname)
-        if (cal) 
+        if (cal) {
+            validateCalendar(date, cal, days, true)
             addHoliday(date, days, cal)
-        else
+        } else
             throw new BcCalendarNotFoundException("BcCalendar '${calshortname}' not configured.")
     }
 
-    private boolean validateCalendar(Calendar cal, int days) {
-        if (!cal.monday && !cal.tuesday && !cal.wednesday && !cal.thursday && !cal.friday && !cal.saturday && !cal.sunday)
-            throw new BcCalendarMisconfiguredException("Calendar '${cal.shortname}' does not contain regular workingdays")
+    private boolean validateCalendar(Date date, Calendar cal, int days, boolean holiday) {
+        if (!cal.monday && !cal.tuesday && !cal.wednesday && !cal.thursday && !cal.friday && !cal.saturday && !cal.sunday) {
+            def list = cal.except.findAll { obj ->
+                (date >= 0 ? obj.date > date : obj.date < date) && (holiday ? !obj.additionalDay : obj.additionalDay)
+            }
+            if (list.size() > Math.abs(days))
+                true
+            else            
+                throw new BcCalendarMisconfiguredException("Calendar '${cal.shortname}' does not contain regular workingdays and irregular ${holiday ? 'holy' : 'working '}days only count to ${list.size()} while more than ${Math.abs(days)} are needed.")
+        }
         else
             true
     }
