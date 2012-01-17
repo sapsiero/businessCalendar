@@ -1,6 +1,6 @@
 package com.sapsiero.businesscalendar
 
-class Calendar {
+class BcCalendar {
 
     String shortname
     String name

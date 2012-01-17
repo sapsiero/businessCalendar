@@ -6,7 +6,7 @@ class BcDate {
 
     boolean additionalDay
 
-    static belongsTo = [calendar: com.sapsiero.businesscalendar.Calendar]
+    static belongsTo = [calendar: BcCalendar]
 
     static constraints = {
         calendar()

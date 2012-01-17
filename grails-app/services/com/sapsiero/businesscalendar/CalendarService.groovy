@@ -3,14 +3,14 @@ package com.sapsiero.businesscalendar
 class CalendarService {
 
     boolean isWorkingDay(Date date, String calshortname) {
-        def cal = Calendar.findByShortname(calshortname)
+        def cal = BcCalendar.findByShortname(calshortname)
         if (cal) 
             isWorkingDay(date, cal)
         else
             throw new BcCalendarNotFoundException("BcCalendar '${calshortname}' not configured.")
     }
 
-    boolean isWorkingDay(Date date, Calendar cal) {
+    boolean isWorkingDay(Date date, BcCalendar cal) {
         def isWorkingDay = false
         
         def c = java.util.Calendar.getInstance()
@@ -55,11 +55,11 @@ class CalendarService {
         !isWorkingDay(date, calshortname)
     }
 
-    boolean isHoliday(Date date, Calendar cal) {
+    boolean isHoliday(Date date, BcCalendar cal) {
         !isWorkingDay(date, cal)
     }
 
-    Date addWorkingDay(Date date, int days, Calendar cal) {
+    Date addWorkingDay(Date date, int days, BcCalendar cal) {
         validateCalendar(date, cal, days, false)
         def nextdate = date
         (0..days).each() { day ->
@@ -72,7 +72,7 @@ class CalendarService {
     }
 
     Date addWorkingDay(Date date, int days, String calshortname) {
-        def cal = Calendar.findByShortname(calshortname)
+        def cal = BcCalendar.findByShortname(calshortname)
         if (cal) {
             validateCalendar(date, cal, days, false)
             addWorkingDay(date, days, cal)
@@ -80,7 +80,7 @@ class CalendarService {
             throw new BcCalendarNotFoundException("BcCalendar '${calshortname}' not configured.")
     }
 
-    Date addHoliday(Date date, int days, Calendar cal) {
+    Date addHoliday(Date date, int days, BcCalendar cal) {
         validateCalendar(date, cal, days, true)
         def nextdate = date
         (1..days).each() {
@@ -92,7 +92,7 @@ class CalendarService {
     }
 
     Date addHoliday(Date date, int days, String calshortname) {
-        def cal = Calendar.findByShortname(calshortname)
+        def cal = BcCalendar.findByShortname(calshortname)
         if (cal) {
             validateCalendar(date, cal, days, true)
             addHoliday(date, days, cal)
@@ -100,15 +100,15 @@ class CalendarService {
             throw new BcCalendarNotFoundException("BcCalendar '${calshortname}' not configured.")
     }
 
-    private boolean validateCalendar(Date date, Calendar cal, int days, boolean holiday) {
+    private boolean validateCalendar(Date date, BcCalendar cal, int days, boolean holiday) {
         if (!cal.monday && !cal.tuesday && !cal.wednesday && !cal.thursday && !cal.friday && !cal.saturday && !cal.sunday) {
             def list = cal.except.findAll { obj ->
-                (date >= 0 ? obj.date > date : obj.date < date) && (holiday ? !obj.additionalDay : obj.additionalDay)
+                (days >= 0 ? obj.date > date : obj.date < date) && (holiday ? !obj.additionalDay : obj.additionalDay)
             }
             if (list.size() > Math.abs(days))
                 true
             else            
-                throw new BcCalendarMisconfiguredException("Calendar '${cal.shortname}' does not contain regular workingdays and irregular ${holiday ? 'holy' : 'working '}days only count to ${list.size()} while more than ${Math.abs(days)} are needed.")
+                throw new BcCalendarMisconfiguredException("BcCalendar '${cal.shortname}' does not contain regular workingdays and irregular ${holiday ? 'holy' : 'working '}days only count to ${list.size()} while more than ${Math.abs(days)} are needed.")
         }
         else
             true
